@@ -32,6 +32,7 @@ func bootstrapAsyncReplication(ctx context.Context) error {
 	svc := os.Getenv("SERVICE_NAME_UNREADY")
 	mysqlSvc := os.Getenv("SERVICE_NAME")
 	peers, err := lookup(svc)
+
 	if err != nil {
 		return errors.Wrap(err, "lookup")
 	}
@@ -59,12 +60,12 @@ func bootstrapAsyncReplication(ctx context.Context) error {
 	}
 	log.Printf("FQDN: %s", fqdn)
 
-	podHostname, err := os.Hostname()
-	if err != nil {
-		return errors.Wrap(err, "get hostname")
-	}
-
-	podIp, err := getPodIP(podHostname)
+	// podHostname, err := os.Hostname()
+	// if err != nil {
+	// 	return errors.Wrap(err, "get hostname")
+	// }
+	// FKS: resolving the hostname on localhost returns none of the correct IPs, so we use FLY_PRIVATE_IP
+	podIp, err := getFlyPodIP()
 	if err != nil {
 		return errors.Wrap(err, "get pod IP")
 	}
@@ -161,7 +162,9 @@ func bootstrapAsyncReplication(ctx context.Context) error {
 		log.Println("Clone finished. Restarting container...")
 
 		// We return with 1 to restart container
-		os.Exit(1)
+		//os.Exit(1)
+		// FKS: Restart by killing a sidecar :D
+		restartContainer()
 	}
 
 	if !requireClone {
